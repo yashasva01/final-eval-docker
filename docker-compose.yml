@@ -1,0 +1,73 @@
+version: "3"
+services:
+  redis:
+    image: redis:latest
+    restart: always
+
+
+
+  cms-service:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: cms-service
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+
+
+
+  auth:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: cms-service
+    ports:
+      - "5434:5433"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+
+
+
+
+  migrationsUserAuth:
+    build: 
+      context: ../userAuth
+      dockerfile: Dockerfile.migrations
+    depends_on:
+      - cms-service
+      - auth
+
+
+
+  migrationsCMS-service:
+    build: 
+      context: ../backend
+      dockerfile: Dockerfile.migrations
+    depends_on:
+      - cms-service
+      - auth
+
+
+
+  authService:
+    build: ../userAuth
+    ports:
+      - "4000:9000"
+  
+
+
+  
+  cmsService:
+    build: ../backend
+    ports:
+      - "4001:9001"
+    # environment:
+    #   DB_HOST: db
+    #   DB_USER: user
+    #   DB_PASSWORD: password
+    #   DB_NAME: db
+    #   DB_PORT: 5432
